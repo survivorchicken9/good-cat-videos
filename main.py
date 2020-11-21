@@ -5,6 +5,7 @@ import pandas as pd
 
 
 load_dotenv()  # loading env variables for access
+# DEVELOPER_KEY = "AIzaSyASE8SnAs9RX9qcMbKD4gGBBpUywHGdG-0"
 DEVELOPER_KEY = os.getenv("DEVELOPER-KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
@@ -115,6 +116,7 @@ if __name__ == "__main__":
         saved_results, next_page = youtube_search("cat videos", token=search_next_page)
         next_df = pd.DataFrame.from_dict(saved_results)
         df = df.append(next_df)
+        search_next_page = next_page
         print(f"Ran {i} times, page {next_page}.")
     df.to_csv("test_df.csv")
 
