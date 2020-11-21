@@ -1,11 +1,11 @@
+from os import path, getenv
 from dotenv import load_dotenv
-import os
 from googleapiclient.discovery import build
 import pandas as pd
 
 
 load_dotenv()  # loading env variables for access
-DEVELOPER_KEY = os.getenv("DEVELOPER-KEY")
+DEVELOPER_KEY = getenv("DEVELOPER-KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
@@ -109,13 +109,31 @@ def youtube_search(
 
 
 if __name__ == "__main__":
-    df = pd.DataFrame()
-    search_next_page = None
-    for i in range(1, 2):  # just change this value for how many pages to run
-        saved_results, next_page = youtube_search("cat videos", token=search_next_page)
-        next_df = pd.DataFrame.from_dict(saved_results)
-        df = df.append(next_df)
-        print(f"Ran {i} times, page {next_page}.")
-    df.to_csv("test_df.csv")
+    # setting up dataframe of results
+    if not path.exists(f'cat_test_results.csv'):
+        final_results = pd.DataFrame()  # initialize empty df for first time crawl
+    else:
+        final_results = pd.read_csv(f'cat_test_results.csv')  # continue with existing for nth crawl
 
-    # TODO add checking if value already exists or not before adding into df
+    search_next_page = None
+    for i in range(1, 4):  # just change this value for how many pages to run
+        next_page_results, search_next_page = youtube_search("cat videos", token=search_next_page)
+        next_page_df = pd.DataFrame.from_dict(next_page_results)
+        results_to_add = []
+
+        # iterate over table with itertuples (good performance)
+        for result in next_page_df.itertuples():
+            if result[6] not in final_results['videoId'].values:
+                results_to_add.append(result)
+                print(f"LOGGING: {result[6]} has been added.")
+                continue
+            print(f"WARNING: {result[6]} already exists.")
+
+        final_results = final_results.append(results_to_add, ignore_index=True)
+
+        print()
+        print(f"Ran {i} times, page {search_next_page}.")
+        print()
+
+    # saving output
+    final_results.to_csv("cat_test_results.csv")
