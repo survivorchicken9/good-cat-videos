@@ -5,7 +5,6 @@ import pandas as pd
 
 
 load_dotenv()  # loading env variables for access
-# DEVELOPER_KEY = "AIzaSyASE8SnAs9RX9qcMbKD4gGBBpUywHGdG-0"
 DEVELOPER_KEY = os.getenv("DEVELOPER-KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
