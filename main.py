@@ -114,14 +114,28 @@ def youtube_search(
 
 	return youtube_dict, next_page_token
 
+def remove_redundancy(prev_list=[],added_list):
+	new_list = []
+	for vid in added_list:
+		if vid['videoId'] not in prev_list['videoId'].values:
+			new_list.append(vid)
+	return new_list
 
 if __name__ == "__main__":
 	# setting up dataframe of results
-	if not path.exists(f'cat_test_results_trial.csv'):
+	
+	# Default csv save name, check environment for alternative save names
+	# Then checks directory for the csv file
+	try:
+		SAVEFILE_NAME = getenv(SAVEFILE-NAME)
+	except:
+		SAVEFILE_NAME = f'cat_test_results.csv'
+	if not path.exists(SAVEFILE_NAME):
 		final_results = pd.DataFrame()
 	else:
-		final_results = pd.read_csv(f'cat_test_results_trial.csv')  # continue with existing for nth crawl
-
+		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
+		final_results = remove_redundancy(added_list=final_results)
+	
 	# setting up token for next page, string for query, and list to store all valid results
 	search_next_page = None
 	search_queries = ["funny cats", "cat compilation"]
@@ -134,7 +148,7 @@ if __name__ == "__main__":
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
 		for search_query in search_queries:
-			for i in range(1, 20):  # just change this value for how many pages to run
+			for i in range(1, 10):  # just change this value for how many pages to run
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
 					token=search_next_page,
@@ -145,32 +159,34 @@ if __name__ == "__main__":
 				next_page_df['search_query'] = search_query  # adding search query column value
 		
 				# iterate over table with itertuples (good performance)
-				for result in next_page_df.itertuples():
-					try:
-						if result[6] not in final_results['videoId'].values:  # result[6] is videoId column value
-							valid_data += 1
-							results_to_add.append(result)
-							print(f"LOGGING: {result[6]} has been added.")
-							continue
-						duplicate_data += 1
-						print(f"WARNING: {result[6]} already exists.")
-					except KeyError:
-						valid_data += 1
-						results_to_add.append(result)
-						print(f"LOGGING: {result[6]} has been added.")
+				results_to_add = remove_redundancy(final_results,next_page_df.itertuples())
+				# for result in next_page_df.itertuples():
+				# 	try:
+				# 		if result[6] not in final_results['videoId'].values:  # result[6] is videoId column value
+				# 			valid_data += 1
+				# 			results_to_add.append(result)
+				# 			# print(f"LOGGING: {result[6]} has been added.")
+				# 			continue
+				# 		duplicate_data += 1
+				# 		# print(f"WARNING: {result[6]} already exists.")
+				# 	except KeyError:
+				# 		valid_data += 1
+				# 		results_to_add.append(result)
+				# 		# print(f"LOGGING: {result[6]} has been added.")
 				
 				final_results = final_results.append(results_to_add, ignore_index=True)
 		
-				print()
-				print(f"Ran {i} times for search query '{search_query}', page {search_next_page}.")
-				print(f"Valid data found: {valid_data}")
-				print(f"Duplicate data found: {duplicate_data}")
-				print()
+				# print()
+				# print(f"Ran {i} times for search query '{search_query}', page {search_next_page}.")
+				# print(f"Valid data found: {valid_data}")
+				# print(f"Duplicate data found: {duplicate_data}")
+				# print()
 	
 	# don't exit when http error just save final results
 	except HttpError:
 		print('WARNING: You have exceeded your daily quota.')
 
-	# saving output
-	final_results.to_csv("cat_test_results_trial.csv", index=False)
+	# saving output, overwrite previous csv
+	final_results.to_csv(SAVEFILE_NAME, index=False, mode='w')
+	print('Token for next search:',search_next_page)
 	# print(final_results.head())
