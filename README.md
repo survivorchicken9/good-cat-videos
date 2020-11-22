@@ -4,9 +4,10 @@
 
 We'll come up with a better name later.
 
-## Things to fix so far
-- add mechanism to check if row is already in saved dataset (just check if videoid exists in current csv)
-- check if csv exists already (and if it does append to that instead of overwriting)
+## Things to do
+- test multiple keywords manually (find the best ones for actually getting data)
+- continue EDA (see attached notebook)
+- set up basic frontend (deciding between flask and streamlit)
 
 Packages managed using pipenv. Check the pipfile for list of dependencies.
 If pipfile lock isn't working, use --pre (need it for the dev dependencies).
