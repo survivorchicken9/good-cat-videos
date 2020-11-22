@@ -6,7 +6,7 @@ Basically a site where you put in the title (or URL?) of a cat video and we'll t
 
 Basic frontend made for project. Still lots of tweaking to do (not to mention actual model building) but I just wanted to template out the flow of the site.
 
-Site will be live here: https://judging-cat-videos.herokuapp.com/
+Site live here: https://judging-cat-videos.herokuapp.com/
 
 ## Running the site locally
 - install all dependencies from pipfile
