@@ -114,10 +114,10 @@ def youtube_search(
 
 	return youtube_dict, next_page_token
 
-def remove_redundancy(prev_list=[],added_list):
+def remove_redundancy(prev_list=[],added_list=[]):
 	new_list = []
 	for vid in added_list:
-		if vid['videoId'] not in prev_list['videoId'].values:
+		if vid[6] not in prev_list['videoId'].values:
 			new_list.append(vid)
 	return new_list
 
@@ -134,10 +134,10 @@ if __name__ == "__main__":
 		final_results = pd.DataFrame()
 	else:
 		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
-		final_results = remove_redundancy(added_list=final_results)
+		final_results = remove_redundancy(added_list=final_results.itertuples())
 	
-	# setting up token for next page, string for query, and list to store all valid results
-	search_next_page = None
+	# setting up token for search start position, string for query, and list to store all valid results
+	search_next_page = getenv("NEXT-PAGE-TOKEN")
 	search_queries = ["funny cats", "cat compilation"]
 	results_to_add = []
 	
@@ -176,11 +176,6 @@ if __name__ == "__main__":
 				
 				final_results = final_results.append(results_to_add, ignore_index=True)
 		
-				# print()
-				# print(f"Ran {i} times for search query '{search_query}', page {search_next_page}.")
-				# print(f"Valid data found: {valid_data}")
-				# print(f"Duplicate data found: {duplicate_data}")
-				# print()
 	
 	# don't exit when http error just save final results
 	except HttpError:
