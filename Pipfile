@@ -10,6 +10,13 @@ black = "*"
 pandas = "*"
 google-api-python-client = "*"
 python-dotenv = "*"
+numpy = "*"
+matplotlib = "*"
+seaborn = "*"
+sklearn = "*"
 
 [requires]
 python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true
