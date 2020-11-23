@@ -115,7 +115,6 @@ def youtube_search(
 	return youtube_dict, next_page_token
 
 def remove_redundancy(prev_list=[],added_list=[]):
-	column_names = prev_list.columns
 	new_list = []
 	for vid in added_list:
 		# print(vid)
