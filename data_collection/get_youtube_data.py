@@ -56,6 +56,7 @@ def youtube_search(
 	videos = []
 	thumbnails = []
 	descriptions = []
+	dates = []
 
 	# fill lists with metadata from search items in the raw search: list
 	for search_result in search_response.get("items", []):
@@ -82,7 +83,8 @@ def youtube_search(
 									"tags": ("snippet", tags),
 									"videos": ("snippet", videos),
 									"thumbnails": ("snippet", thumbnails),
-									"description": ("snippet", descriptions)}
+									"description": ("snippet", descriptions),
+									"publishedAt": {"snippet", dates}}
 
 			# adding all metadata results to metadata lists if they are there
 			for item in video_metadata_items:
@@ -107,7 +109,8 @@ def youtube_search(
 		"commentCount": commentCount,
 		"favoriteCount": favoriteCount,
 		"thumbnails": thumbnails,
-		"descriptions": descriptions
+		"descriptions": descriptions,
+		"dates": dates
 	}
 
 	next_page_token = search_response.get("nextPageToken")
@@ -128,7 +131,7 @@ if __name__ == "__main__":
 	column_names = ['videoId','tags','channelId','channelTitle','categoryId',\
 			'title','viewCount','likeCount', \
 			'dislikeCount','commentCount','favoriteCount', \
-			'thumbnails','descriptions','search_query']
+			'thumbnails','descriptions','search_query','dates']
 	# Default csv save name, check environment for alternative save names
 	# Then checks directory for the csv file
 	try:
