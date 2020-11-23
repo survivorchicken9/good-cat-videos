@@ -118,29 +118,29 @@ def remove_redundancy(prev_list=[],added_list=[]):
 	new_list = []
 	for vid in added_list:
 		# print(vid)
-		if vid.Index not in prev_list.index:
+		if vid[0] not in prev_list['videoId'].values:
 			new_list.append(vid)
-	new_pd = pd.DataFrame(new_list)
-	return new_pd.set_index('Index')
+	if new_list == []: return None
+	return pd.DataFrame(new_list).set_index("videoId").reset_index()
 
 if __name__ == "__main__":
 	# setting up dataframe of results
-	column_names = ['tags','channelId','channelTitle','categoryId',\
+	column_names = ['videoId','tags','channelId','channelTitle','categoryId',\
 			'title','viewCount','likeCount', \
 			'dislikeCount','commentCount','favoriteCount', \
 			'thumbnails','descriptions','search_query']
 	# Default csv save name, check environment for alternative save names
 	# Then checks directory for the csv file
 	try:
-		SAVEFILE_NAME = getenv(SAVEFILE-NAME)
+		SAVEFILE_NAME = getenv("SAVEFILE-NAME")
 	except:
 		SAVEFILE_NAME = f'cat_test_results.csv'
 	if not path.exists(SAVEFILE_NAME):
 		final_results = pd.DataFrame(columns=column_names)
 	else:
-		final_results = pd.read_csv(SAVEFILE_NAME,index_col="videoId")  # continue with existing for nth crawl
-		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples())
-	
+		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
+		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples(index=False))
+
 	# setting up token for search start position, string for query, and list to store all valid results
 	search_next_page = getenv("NEXT-PAGE-TOKEN")
 	search_queries = ["funny cats", "cat compilation"]
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
 		for search_query in search_queries:
-			for i in range(2):  # just change this value for how many pages to run
+			for i in range(3):  # just change this value for how many pages to run
 				#YT Search
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
@@ -157,19 +157,17 @@ if __name__ == "__main__":
 				)
 				
 				#Processing Search data
-				next_page_df = pd.DataFrame.from_dict(next_page_results)
-				next_page_df.set_index('videoId',inplace=True)
+				next_page_df = pd.DataFrame.from_dict(next_page_results). \
+					set_index("videoId").reset_index()
 				next_page_df['search_query'] = search_query  # adding search query column value
-		
+
 				# add to existing data
-				results_to_add = remove_redundancy(final_results,next_page_df.itertuples())
-				final_results = final_results.append(results_to_add, ignore_index=True)
-		
+				results_to_add = remove_redundancy(final_results,next_page_df.itertuples(index=False))
+				final_results = final_results.append(results_to_add,ignore_index=True)
 	
 	# don't exit when http error just save final results
 	except HttpError:
 		print('WARNING: You have exceeded your daily quota.')
-
 	# saving output, overwrite previous csv
-	final_results.to_csv(SAVEFILE_NAME,index=True,index_label='videoId',mode='w')
+	final_results.to_csv(SAVEFILE_NAME,index=False,mode='w')
 	print('Token for next search:',search_next_page)
