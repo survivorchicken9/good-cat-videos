@@ -115,15 +115,21 @@ def youtube_search(
 	return youtube_dict, next_page_token
 
 def remove_redundancy(prev_list=[],added_list=[]):
+	column_names = prev_list.columns
 	new_list = []
 	for vid in added_list:
-		if vid[6] not in prev_list['videoId'].values:
+		# print(vid)
+		if vid.Index not in prev_list.index:
 			new_list.append(vid)
-	return new_list
+	new_pd = pd.DataFrame(new_list)
+	return new_pd.set_index('Index')
 
 if __name__ == "__main__":
 	# setting up dataframe of results
-	
+	column_names = ['tags','channelId','channelTitle','categoryId',\
+			'title','viewCount','likeCount', \
+			'dislikeCount','commentCount','favoriteCount', \
+			'thumbnails','descriptions','search_query']
 	# Default csv save name, check environment for alternative save names
 	# Then checks directory for the csv file
 	try:
@@ -131,49 +137,33 @@ if __name__ == "__main__":
 	except:
 		SAVEFILE_NAME = f'cat_test_results.csv'
 	if not path.exists(SAVEFILE_NAME):
-		final_results = pd.DataFrame()
+		final_results = pd.DataFrame(columns=column_names)
 	else:
-		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
-		final_results = remove_redundancy(added_list=final_results.itertuples())
+		final_results = pd.read_csv(SAVEFILE_NAME,index_col="videoId")  # continue with existing for nth crawl
+		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples())
 	
 	# setting up token for search start position, string for query, and list to store all valid results
 	search_next_page = getenv("NEXT-PAGE-TOKEN")
 	search_queries = ["funny cats", "cat compilation"]
-	results_to_add = []
-	
-	# logging variables
-	duplicate_data = 0
-	valid_data = 0
 	
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
 		for search_query in search_queries:
-			for i in range(1, 10):  # just change this value for how many pages to run
+			for i in range(2):  # just change this value for how many pages to run
+				#YT Search
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
 					token=search_next_page,
 					max_results=50,
 				)
 				
+				#Processing Search data
 				next_page_df = pd.DataFrame.from_dict(next_page_results)
+				next_page_df.set_index('videoId',inplace=True)
 				next_page_df['search_query'] = search_query  # adding search query column value
 		
-				# iterate over table with itertuples (good performance)
+				# add to existing data
 				results_to_add = remove_redundancy(final_results,next_page_df.itertuples())
-				# for result in next_page_df.itertuples():
-				# 	try:
-				# 		if result[6] not in final_results['videoId'].values:  # result[6] is videoId column value
-				# 			valid_data += 1
-				# 			results_to_add.append(result)
-				# 			# print(f"LOGGING: {result[6]} has been added.")
-				# 			continue
-				# 		duplicate_data += 1
-				# 		# print(f"WARNING: {result[6]} already exists.")
-				# 	except KeyError:
-				# 		valid_data += 1
-				# 		results_to_add.append(result)
-				# 		# print(f"LOGGING: {result[6]} has been added.")
-				
 				final_results = final_results.append(results_to_add, ignore_index=True)
 		
 	
@@ -182,6 +172,5 @@ if __name__ == "__main__":
 		print('WARNING: You have exceeded your daily quota.')
 
 	# saving output, overwrite previous csv
-	final_results.to_csv(SAVEFILE_NAME, index=False, mode='w')
+	final_results.to_csv(SAVEFILE_NAME,index=True,index_label='videoId',mode='w')
 	print('Token for next search:',search_next_page)
-	# print(final_results.head())
