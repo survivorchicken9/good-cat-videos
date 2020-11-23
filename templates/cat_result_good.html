@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <div class="jumbotron">
+        <h1 class="display-4">You should definitely check out this video!</h1>
+        <div class="mb-3">
+            <img class="img-fluid"
+                 src="{{ url_for('static', filename='cat_good.png') }}"
+                 align="middle" alt="cat drawing" width="15%"
+            />
+        </div>
+    </div>
+
+{% endblock %}
