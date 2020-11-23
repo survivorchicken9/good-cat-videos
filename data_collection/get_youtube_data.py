@@ -162,14 +162,14 @@ if __name__ == "__main__":
             pd.DataFrame(columns=column_names), final_results.itertuples(index=False)
         )
 
-    # setting up token for search start position, string for query, and list to store all valid results
+    # setting up token for search start position and string for query
     search_next_page = getenv("NEXT-PAGE-TOKEN")
     search_queries = ["funny cats", "cat compilation"]
 
     # sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
     try:
         for search_query in search_queries:
-            for i in range(3):  # just change this value for how many pages to run
+            for i in range(10):  # just change this value for how many pages to run
                 # YT Search
                 next_page_results, search_next_page = youtube_search(
                     q=search_query,
