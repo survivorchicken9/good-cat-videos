@@ -14,6 +14,9 @@ numpy = "*"
 matplotlib = "*"
 seaborn = "*"
 sklearn = "*"
+jupyter = "*"
+flask = "*"
+uwsgi = "*"
 
 [requires]
 python_version = "3.8"
