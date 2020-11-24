@@ -56,7 +56,7 @@ def youtube_search(
 	videos = []
 	thumbnails = []
 	descriptions = []
-	dates = []
+	uploadDate = []
 
 	# fill lists with metadata from search items in the raw search: list
 	for search_result in search_response.get("items", []):
@@ -84,7 +84,7 @@ def youtube_search(
 									"videos": ("snippet", videos),
 									"thumbnails": ("snippet", thumbnails),
 									"description": ("snippet", descriptions),
-									"publishedAt": {"snippet", dates}}
+									"publishedAt": ("snippet", uploadDate)}
 
 			# adding all metadata results to metadata lists if they are there
 			for item in video_metadata_items:
@@ -110,7 +110,7 @@ def youtube_search(
 		"favoriteCount": favoriteCount,
 		"thumbnails": thumbnails,
 		"descriptions": descriptions,
-		"dates": dates
+		"uploadDate": uploadDate
 	}
 
 	next_page_token = search_response.get("nextPageToken")
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 	column_names = ['videoId','tags','channelId','channelTitle','categoryId',\
 			'title','viewCount','likeCount', \
 			'dislikeCount','commentCount','favoriteCount', \
-			'thumbnails','descriptions','search_query','dates']
+			'thumbnails','descriptions','search_query','uploadDate']
 	# Default csv save name, check environment for alternative save names
 	# Then checks directory for the csv file
 	try:
@@ -145,18 +145,20 @@ if __name__ == "__main__":
 		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples(index=False))
 
 	# setting up token for search start position, string for query, and list to store all valid results
-	search_next_page = getenv("NEXT-PAGE-TOKEN")
+	# start_tokens = getenv("NEXT-PAGE-TOKEN")
+	start_tokens = [None, None]	#I'll refrain from using .env files
 	search_queries = ["funny cats", "cat compilation"]
 	
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
-		for search_query in search_queries:
-			for i in range(3):  # just change this value for how many pages to run
+		for count, search_query in enumerate(search_queries):
+			next_page_token = start_tokens[count]
+			for i in range(1):  # just change this value for how many pages to run
 				#YT Search
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
 					token=search_next_page,
-					max_results=50,
+					max_results=50
 				)
 				
 				#Processing Search data
@@ -167,10 +169,10 @@ if __name__ == "__main__":
 				# add to existing data
 				results_to_add = remove_redundancy(final_results,next_page_df.itertuples(index=False))
 				final_results = final_results.append(results_to_add,ignore_index=True)
+			print(f'Token for search {search_query} : {search_next_page}')
 	
 	# don't exit when http error just save final results
 	except HttpError:
 		print('WARNING: You have exceeded your daily quota.')
 	# saving output, overwrite previous csv
 	final_results.to_csv(SAVEFILE_NAME,index=False,mode='w')
-	print('Token for next search:',search_next_page)
