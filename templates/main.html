@@ -19,6 +19,13 @@
                 <input type="text" class="form-control" id="title" name="title" aria-describedby="title_help" placeholder="Some really funny cat video">
                 <small id="title_help" class="form-text text-muted">We'll let you know if it's worth watching!</small>
             </div>
+            <div class="form-group">
+                <label for="classifier_type">Select a classifier</label>
+                <select class="form-control" id="classifier_type" name="classifier_type">
+                    <option value="simple_heuristics">Simple heuristics</option>
+                    <option value="linear_regression">Linear regression</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary">Check</button>
         </form>
     </div>
