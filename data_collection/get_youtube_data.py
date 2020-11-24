@@ -169,7 +169,7 @@ if __name__ == "__main__":
     # sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
     try:
         for search_query in search_queries:
-            for i in range(10):  # just change this value for how many pages to run
+            for i in range(12):  # just change this value for how many pages to run
                 # YT Search
                 next_page_results, search_next_page = youtube_search(
                     q=search_query,
