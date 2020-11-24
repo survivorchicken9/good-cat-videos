@@ -6,18 +6,14 @@ Basically a site where you put in the title (or URL?) of a cat video and we'll t
 
 Basic frontend made for project. Still lots of tweaking to do (not to mention actual model building) but I just wanted to template out the flow of the site.
 
-Site live here: https://judging-cat-videos.herokuapp.com/
+Now running on a very (very) simple linear regression model based on the input video title and most popular words.
+
+The site is live here: https://judging-cat-videos.herokuapp.com/
 
 ## Running the site locally
 - install all dependencies from pipfile
 - run app.py
 - check site running on localhost
 
-## Things to do
-- make sure script works inside data_collection folder (and saves output there)
-- test multiple keywords manually (find the best ones for actually getting data)
-- continue EDA (see attached notebook)
-- continue set up basic frontend (flask)
-
 Packages managed using pipenv. Check the pipfile for list of dependencies.
-If pipfile lock isn't working, use --pre (need it for the dev dependencies).
+If pipfile lock isn't working, use --pre (usually need it for the dev dependencies).
