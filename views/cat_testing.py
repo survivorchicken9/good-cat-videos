@@ -11,14 +11,16 @@ def check_video():
     if request.method == "POST":
         title = request.form["title"]
         classifier_type = request.form.get("classifier_type")
-        
+
         # catch empty titles
         if not title:
-            return render_template("main.html")  # add the flash message instead of this for clarity on UI
+            return render_template(
+                "main.html"
+            )  # add the flash message instead of this for clarity on UI
 
         # and now we start the magic
         # TODO: show on results page what kind of classifier was used
-        if classifier_type == 'simple_heuristics':
+        if classifier_type == "simple_heuristics":
             model = simple_heuristics
             if model.predict(title):
                 return render_template("result_good.html")
