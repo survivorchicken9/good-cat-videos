@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 
 
-def linear_regression_test_processing(video_title: str):
+def simple_regression_test_processing(video_title: str):
     processed_list = video_title.lower().split()
     test_dataframe = pd.DataFrame()
 

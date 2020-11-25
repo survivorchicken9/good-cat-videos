@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request
 import classifier.simple_heuristics as simple_heuristics
-from common.utils import load_model, linear_regression_test_processing
+from common.utils import load_model, simple_regression_test_processing
 
-cat_testing_blueprint = Blueprint("cat_testing", __name__)
+main_blueprint = Blueprint("cat_testing", __name__)
 
 
-@cat_testing_blueprint.route("/", methods=["GET", "POST"])
+@main_blueprint.route("/", methods=["GET", "POST"])
 def check_video():
     # TODO: create general preprocessing function for all user title inputs
     if request.method == "POST":
@@ -27,9 +27,9 @@ def check_video():
             return render_template("result_bad.html")
 
         else:
-            # only linear regression method for now
+            # (bad) linear and logistic regression methods for now
             model = load_model(classifier_type)
-            result = model.predict(linear_regression_test_processing(title))
+            result = model.predict(simple_regression_test_processing(title))
             if result >= 36:
                 return render_template("result_good.html")
             return render_template("result_bad.html")
