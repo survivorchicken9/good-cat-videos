@@ -19,9 +19,9 @@
             <div id="navbarNavAltMarkup" class="collapse navbar-collapse">
                 <div class="navbar-nav">
                     <a class="nav-item nav-link" href="/">Home</a>
-                    <a class="nav-item nav-link" href="/">About</a>
-                    <a class="nav-item nav-link" href="/">Process</a>
-                    <a class="nav-item nav-link" href="/">Developers</a>
+                    <a class="nav-item nav-link" href="{{ url_for('about.index') }}">About</a>
+                    <a class="nav-item nav-link" href="{{ url_for('process.index') }}">Process</a>
+                    <a class="nav-item nav-link" href="{{ url_for('resources.index') }}">Resources</a>
                 </div>
             </div>
         </nav>
