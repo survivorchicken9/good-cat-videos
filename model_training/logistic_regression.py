@@ -72,7 +72,7 @@ y = df_logreg["Quality"]
 # print(mean_absolute_error(val_y, val_predictions))
 
 # train model with all data and pickle for use in production
-logreg_model = LogisticRegressionCV(solver='liblinear', cv=6)
+logreg_model = LogisticRegressionCV(solver="liblinear", cv=6)
 logreg_model.fit(X, y)
 pickled_model = {"model": logreg_model}
 pickle.dump(pickled_model, open("../classifier/logistic_regression" + ".p", "wb"))

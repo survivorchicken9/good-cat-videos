@@ -5,4 +5,4 @@ process_blueprint = Blueprint("process", __name__)
 
 @process_blueprint.route("/")
 def index():
-	return render_template("process.html")
+    return render_template("process.html")

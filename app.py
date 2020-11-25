@@ -8,9 +8,9 @@ app = Flask(__name__)
 
 
 app.register_blueprint(main_blueprint)
-app.register_blueprint(about_blueprint, url_prefix='/about')
-app.register_blueprint(process_blueprint, url_prefix='/process')
-app.register_blueprint(resources_blueprint, url_prefix='/resources')
+app.register_blueprint(about_blueprint, url_prefix="/about")
+app.register_blueprint(process_blueprint, url_prefix="/process")
+app.register_blueprint(resources_blueprint, url_prefix="/resources")
 
 
 if __name__ == "__main__":

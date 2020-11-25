@@ -5,4 +5,4 @@ about_blueprint = Blueprint("about", __name__)
 
 @about_blueprint.route("/")
 def index():
-	return render_template("about.html")
+    return render_template("about.html")

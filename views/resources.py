@@ -5,4 +5,4 @@ resources_blueprint = Blueprint("resources", __name__)
 
 @resources_blueprint.route("/")
 def index():
-	return render_template("resources.html")
+    return render_template("resources.html")
