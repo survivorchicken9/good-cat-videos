@@ -10,6 +10,12 @@ DEVELOPER_KEY = getenv("DEVELOPER-KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
+#Data columns to be collected from Youtube
+column_names = ["videoId","tags","channelId","channelTitle",\
+		"categoryId","title","viewCount","likeCount", \
+		"dislikeCount","commentCount","favoriteCount", \
+		"thumbnails","descriptions","category","searchQuery",\
+		"uploadDate","videoLen", "videoQual"]
 
 def youtube_search(
 	q: str = None,  # query as string
@@ -41,81 +47,53 @@ def youtube_search(
 	)
 
 	# set up lists to store metadata
-	title = []
-	channelId = []
-	channelTitle = []
-	categoryId = []
-	videoId = []
-	viewCount = []
-	likeCount = []
-	dislikeCount = []
-	commentCount = []
-	favoriteCount = []
-	category = []
-	tags = []
-	videos = []
-	thumbnails = []
-	descriptions = []
-	uploadDate = []
-
+	compiled_data = {key:[] for key in column_names}
 	# fill lists with metadata from search items in the raw search: list
 	for search_result in search_response.get("items", []):
 		# making sure it's a video first
 		if search_result["id"]["kind"] == "youtube#video":
-			title.append(search_result["snippet"]["title"])
-			videoId.append(search_result["id"]["videoId"])
+			compiled_data['videoId'].append(search_result["id"]["videoId"])
+			compiled_data['searchQuery'].append(q)
 
 			video_metadata_response = (
 						youtube.videos()
-						.list(part="statistics, snippet", id=search_result["id"]["videoId"])
+						.list(part="statistics,snippet,contentDetails", \
+							 id=search_result["id"]["videoId"])
 						.execute()
 			)
-
-			video_metadata_items = {"channelId": ("snippet", channelId),
-									"channelTitle": ("snippet", channelTitle),
-									"categoryId": ("snippet", categoryId),
-									"viewCount": ("statistics", viewCount),
-									"likeCount": ("statistics", likeCount),
-									"dislikeCount": ("statistics", dislikeCount),
-									"commentCount": ("statistics", commentCount),
-									"favoriteCount": ("statistics", favoriteCount),
-									"category": ("snippet", category),
-									"tags": ("snippet", tags),
-									"videos": ("snippet", videos),
-									"thumbnails": ("snippet", thumbnails),
-									"description": ("snippet", descriptions),
-									"publishedAt": ("snippet", uploadDate)}
+			video_metadata_items = {("title","snippet"): "title",
+									("channelId","snippet"): "channelId",
+									("channelTitle", "snippet"): "channelTitle",
+									("categoryId", "snippet"): "categoryId",
+									("viewCount", "statistics"): "viewCount",
+									("likeCount", "statistics"): "likeCount",
+									("dislikeCount", "statistics"): "dislikeCount",
+									("commentCount", "statistics"): "commentCount",
+									("favoriteCount", "statistics"): "favoriteCount",
+									("category", "snippet"): "category",
+									("tags", "snippet"): "tags",
+									# ("videos", "snippet"): "videos",
+									("thumbnails", "snippet"): "thumbnails",
+									("description", "snippet"): "descriptions",
+									("publishedAt", "snippet"): "uploadDate",
+									("duration", "contentDetails"): "videoLen",
+									("definition", "contentDetails"): "videoQual"}
 
 			# adding all metadata results to metadata lists if they are there
-			for item in video_metadata_items:
+			for item, target in video_metadata_items.items():
 				try:
-					response_type = str(video_metadata_items[item][0])
-					video_metadata_items[item][1].append(
-						video_metadata_response["items"][0][response_type][item]
+					response_type = str(item[1])
+					compiled_data[target].append(
+						video_metadata_response["items"][0][response_type][item[0]]
 					)
 				except KeyError:
-					video_metadata_items[item][1].append("N/A")
-
-	youtube_dict = {
-		"tags": tags,
-		"channelId": channelId,
-		"channelTitle": channelTitle,
-		"categoryId": categoryId,
-		"title": title,
-		"videoId": videoId,
-		"viewCount": viewCount,
-		"likeCount": likeCount,
-		"dislikeCount": dislikeCount,
-		"commentCount": commentCount,
-		"favoriteCount": favoriteCount,
-		"thumbnails": thumbnails,
-		"descriptions": descriptions,
-		"uploadDate": uploadDate
-	}
+					compiled_data[target].append("N/A")
 
 	next_page_token = search_response.get("nextPageToken")
+	# for key in column_names:
+	# 	print(key, len(compiled_data[key]))
 
-	return youtube_dict, next_page_token
+	return compiled_data, next_page_token
 
 def remove_redundancy(prev_list=[],added_list=[]):
 	new_list = []
@@ -128,10 +106,6 @@ def remove_redundancy(prev_list=[],added_list=[]):
 
 if __name__ == "__main__":
 	# setting up dataframe of results
-	column_names = ['videoId','tags','channelId','channelTitle','categoryId',\
-			'title','viewCount','likeCount', \
-			'dislikeCount','commentCount','favoriteCount', \
-			'thumbnails','descriptions','search_query','uploadDate']
 	# Default csv save name, check environment for alternative save names
 	# Then checks directory for the csv file
 	try:
@@ -145,31 +119,32 @@ if __name__ == "__main__":
 		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples(index=False))
 
 	# setting up token for search start position, string for query, and list to store all valid results
-	# start_tokens = getenv("NEXT-PAGE-TOKEN")
-	start_tokens = [None, None]	#I'll refrain from using .env files
+	start_token = getenv("NEXT-PAGE-TOKEN")
 	search_queries = ["funny cats", "cat compilation"]
 	
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
 		for count, search_query in enumerate(search_queries):
-			next_page_token = start_tokens[count]
+			search_next_page = start_token
 			for i in range(1):  # just change this value for how many pages to run
 				#YT Search
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
 					token=search_next_page,
-					max_results=50
+					max_results=5,
+					order='relevance',		#relevance, rating, viewCount, date, title, videoCount
+					# publishedBefore=,		#RFC3339 Date format
+					# publishedAfter=,
 				)
 				
 				#Processing Search data
 				next_page_df = pd.DataFrame.from_dict(next_page_results). \
 					set_index("videoId").reset_index()
-				next_page_df['search_query'] = search_query  # adding search query column value
-
+				
 				# add to existing data
 				results_to_add = remove_redundancy(final_results,next_page_df.itertuples(index=False))
 				final_results = final_results.append(results_to_add,ignore_index=True)
-			print(f'Token for search {search_query} : {search_next_page}')
+			print(f'Token for next search {search_query} : {search_next_page}')
 	
 	# don't exit when http error just save final results
 	except HttpError:
