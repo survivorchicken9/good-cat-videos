@@ -24,6 +24,8 @@ def youtube_search(
 	token=None,
 	location=None,
 	location_radius=None,
+	publishedBefore=None,
+	publishedAfter=None,
 ):
 	# instantiate discovery object from googleapiclient
 	youtube = build(
@@ -42,6 +44,8 @@ def youtube_search(
 			maxResults=max_results,
 			location=location,
 			locationRadius=location_radius,
+			publishedBefore=publishedBefore,
+			publishedAfter=publishedAfter,
 		)
 		.execute()
 	)
@@ -53,8 +57,8 @@ def youtube_search(
 		# making sure it's a video first
 		if search_result["id"]["kind"] == "youtube#video":
 			compiled_data['videoId'].append(search_result["id"]["videoId"])
-			compiled_data['searchQuery'].append(q)
-
+			# compiled_data['searchQuery'].append(f'/"{str(q)}"/ ')
+			compiled_data['searchQuery'].append((str(q)))
 			video_metadata_response = (
 						youtube.videos()
 						.list(part="statistics,snippet,contentDetails", \
@@ -90,19 +94,23 @@ def youtube_search(
 					compiled_data[target].append("N/A")
 
 	next_page_token = search_response.get("nextPageToken")
-	# for key in column_names:
-	# 	print(key, len(compiled_data[key]))
 
 	return compiled_data, next_page_token
 
+def combine_queries(querySeries):
+	queries = ",".join(set(querySeries.tolist()[0].split(sep=",")))
+	return queries
+
 def remove_redundancy(prev_list=[],added_list=[]):
-	new_list = []
-	for vid in added_list:
-		# print(vid)
-		if vid[0] not in prev_list['videoId'].values:
-			new_list.append(vid)
-	if new_list == []: return None
-	return pd.DataFrame(new_list).set_index("videoId").reset_index()
+	combined_list = pd.concat([prev_list,added_list])
+	main_list = combined_list.groupby("videoId") \
+		[[key for key in column_names if key != "searchQuery"]] \
+		.head(1)
+	query_list = combined_list.groupby(["videoId"]) \
+		["searchQuery"].apply(lambda ser: combine_queries(ser))
+	main_list = main_list.join(query_list,on='videoId')
+
+	return main_list
 
 if __name__ == "__main__":
 	# setting up dataframe of results
@@ -116,7 +124,7 @@ if __name__ == "__main__":
 		final_results = pd.DataFrame(columns=column_names)
 	else:
 		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
-		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results.itertuples(index=False))
+		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results)
 
 	# setting up token for search start position, string for query, and list to store all valid results
 	start_token = getenv("NEXT-PAGE-TOKEN")
@@ -131,19 +139,17 @@ if __name__ == "__main__":
 				next_page_results, search_next_page = youtube_search(
 					q=search_query,
 					token=search_next_page,
-					max_results=5,
+					max_results=50,
 					order='relevance',		#relevance, rating, viewCount, date, title, videoCount
-					# publishedBefore=,		#RFC3339 Date format
-					# publishedAfter=,
+					publishedBefore='2018-12-31T23:59:59Z',		#RFC3339 Date format
+					publishedAfter='2016-01-01T00:00:01Z',
 				)
 				
 				#Processing Search data
-				next_page_df = pd.DataFrame.from_dict(next_page_results). \
-					set_index("videoId").reset_index()
+				next_page_df = pd.DataFrame.from_dict(next_page_results).set_index("videoId").reset_index()
 				
 				# add to existing data
-				results_to_add = remove_redundancy(final_results,next_page_df.itertuples(index=False))
-				final_results = final_results.append(results_to_add,ignore_index=True)
+				final_results = remove_redundancy(final_results,next_page_df)
 			print(f'Token for next search {search_query} : {search_next_page}')
 	
 	# don't exit when http error just save final results
