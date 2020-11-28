@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import pandas as pd
+import re
 
 
 load_dotenv()  # loading env variables for access
@@ -14,7 +15,7 @@ YOUTUBE_API_VERSION = "v3"
 column_names = ["videoId","tags","channelId","channelTitle",\
 		"categoryId","title","viewCount","likeCount", \
 		"dislikeCount","commentCount","favoriteCount", \
-		"thumbnails","descriptions","category","searchQuery",\
+		"thumbnails","descriptions","searchQuery",\
 		"uploadDate","videoLen", "videoQual"]
 
 def youtube_search(
@@ -49,6 +50,7 @@ def youtube_search(
 		)
 		.execute()
 	)
+	result_count = search_response["pageInfo"]["totalResults"]
 
 	# set up lists to store metadata
 	compiled_data = {key:[] for key in column_names}
@@ -74,7 +76,7 @@ def youtube_search(
 									("dislikeCount", "statistics"): "dislikeCount",
 									("commentCount", "statistics"): "commentCount",
 									("favoriteCount", "statistics"): "favoriteCount",
-									("category", "snippet"): "category",
+									# ("category", "snippet"): "category",
 									("tags", "snippet"): "tags",
 									# ("videos", "snippet"): "videos",
 									("thumbnails", "snippet"): "thumbnails",
@@ -95,13 +97,13 @@ def youtube_search(
 
 	next_page_token = search_response.get("nextPageToken")
 
-	return compiled_data, next_page_token
+	return compiled_data, next_page_token, result_count
 
 def combine_queries(querySeries):
 	queries = ",".join(set(querySeries.tolist()[0].split(sep=",")))
 	return queries
 
-def remove_redundancy(prev_list=[],added_list=[]):
+def remove_redundancy(prev_list,added_list):
 	combined_list = pd.concat([prev_list,added_list])
 	main_list = combined_list.groupby("videoId") \
 		[[key for key in column_names if key != "searchQuery"]] \
@@ -109,7 +111,7 @@ def remove_redundancy(prev_list=[],added_list=[]):
 	query_list = combined_list.groupby(["videoId"]) \
 		["searchQuery"].apply(lambda ser: combine_queries(ser))
 	main_list = main_list.join(query_list,on='videoId')
-
+	# print(main_list.head())
 	return main_list
 
 if __name__ == "__main__":
@@ -126,23 +128,26 @@ if __name__ == "__main__":
 		final_results = pd.read_csv(SAVEFILE_NAME)  # continue with existing for nth crawl
 		final_results = remove_redundancy(pd.DataFrame(columns=column_names),final_results)
 
+
 	# setting up token for search start position, string for query, and list to store all valid results
 	start_token = getenv("NEXT-PAGE-TOKEN")
-	search_queries = ["funny cats", "cat compilation"]
+	# search_queries = ["funny cats", "cat compilation"]
+	search_queries = ["cute cats", "cat compilation", "funny cats"]
 	
 	# sorry for the nested for loops but ok this goes through the search queries and adjusts for potential quota limit
 	try:
 		for count, search_query in enumerate(search_queries):
 			search_next_page = start_token
-			for i in range(1):  # just change this value for how many pages to run
+			for i in range(4):  # just change this value for how many pages to run
 				#YT Search
-				next_page_results, search_next_page = youtube_search(
+				next_page_results, search_next_page, result_count = \
+					youtube_search(
 					q=search_query,
 					token=search_next_page,
 					max_results=50,
 					order='relevance',		#relevance, rating, viewCount, date, title, videoCount
-					publishedBefore='2018-12-31T23:59:59Z',		#RFC3339 Date format
-					publishedAfter='2016-01-01T00:00:01Z',
+					publishedBefore='2019-12-31T23:59:59Z',		#RFC3339 Date format
+					publishedAfter='2018-01-01T00:00:01Z',
 				)
 				
 				#Processing Search data
@@ -150,10 +155,22 @@ if __name__ == "__main__":
 				
 				# add to existing data
 				final_results = remove_redundancy(final_results,next_page_df)
-			print(f'Token for next search {search_query} : {search_next_page}')
+			#Reporting search query results
+			if result_count < 1000000:
+				print(f'Result count for query {search_query} : {result_count}')
+			else:
+				print(f'Result count for query {search_query} exceeds 1M')
+			print(f'Token for next search {search_query}  : {search_next_page}')
 	
 	# don't exit when http error just save final results
 	except HttpError:
 		print('WARNING: You have exceeded your daily quota.')
 	# saving output, overwrite previous csv
 	final_results.to_csv(SAVEFILE_NAME,index=False,mode='w')
+	# Edit .env file for next search token
+	# with open(".env","r+") as env_file:
+	# 	env_read = env_file.read()
+	# 	re.sub(r'NEXT-PAGE-TOKEN =.*?{?:\n|$}',\
+	# 		f'NEXT-PAGE-TOKEN = {search_next_page}\n',env_read)
+
+
