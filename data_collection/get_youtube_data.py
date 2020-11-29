@@ -172,5 +172,3 @@ if __name__ == "__main__":
 	# 	env_read = env_file.read()
 	# 	re.sub(r'NEXT-PAGE-TOKEN =.*?{?:\n|$}',\
 	# 		f'NEXT-PAGE-TOKEN = {search_next_page}\n',env_read)
-
-

@@ -1,4 +1,4 @@
-def judge_video(video_input: str):
+def predict(video_input: str):
     # convert to lowercase and create list
     video_input_processed = video_input.lower().split()
 

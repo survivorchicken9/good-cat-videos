@@ -5,8 +5,7 @@
         <p class="lead">A really simple project to judge cat videos</p>
         <div class="mb-3">
             <img class="img-fluid"
-                 src="{{ url_for('static', filename='cat_main.png') }}"
-                 align="middle" alt="cat drawing" width="15%"
+                 src="{{ url_for('static', filename='cat_main.png') }}" alt="cat drawing" width="200px"
             />
         </div>
         <hr class="my-4"/>
@@ -18,6 +17,14 @@
                 <label for="title">Enter your video title here:</label>
                 <input type="text" class="form-control" id="title" name="title" aria-describedby="title_help" placeholder="Some really funny cat video">
                 <small id="title_help" class="form-text text-muted">We'll let you know if it's worth watching!</small>
+            </div>
+            <div class="form-group">
+                <label for="classifier_type">Select a classifier</label>
+                <select class="form-control" id="classifier_type" name="classifier_type">
+                    <option value="simple_heuristics">Simple heuristics</option>
+                    <option value="linear_regression">Linear regression</option>
+                    <option value="logistic_regression">Logistic regression</option>
+                </select>
             </div>
             <button type="submit" class="btn btn-primary">Check</button>
         </form>
